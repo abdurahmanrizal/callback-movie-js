@@ -1,12 +1,13 @@
 const searchBtn = document.querySelector(".search-button");
 
 searchBtn.addEventListener("click", async function () {
-  const search = document.querySelector(".input-keyword");
-  const movies = await getMovie(search.value);
   try {
+    const search = document.querySelector(".input-keyword");
+    const movies = await getMovie(search.value);
     UiMovie(movies);
   } catch (err) {
-    uiError(search.value);
+    uiError(err);
+    // console.log(err);
   }
 });
 
@@ -21,8 +22,18 @@ document.addEventListener("click", async function (e) {
 // function for get movie from omdb API
 function getMovie(search) {
   return fetch("http://www.omdbapi.com/?apikey=cc5844e4&s=" + search)
-    .then((response) => response.json())
-    .then((result) => result.Search);
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(response.statusText);
+      }
+      return response.json();
+    })
+    .then((result) => {
+      if (result.Response === "False") {
+        throw new Error(result.Error);
+      }
+      return result.Search;
+    });
 }
 
 function UiMovie(movies) {
@@ -50,14 +61,14 @@ function uiDetailMovies(res) {
   titleMovie.innerHTML = `${res.Title} (${res.Year})`;
 }
 
-function uiError(search) {
+function uiError(error) {
   const moviesContainer = document.querySelector(".movie-container");
-  const keyword = document.querySelector(".input-keyword");
+  //   const keyword = document.querySelector(".input-keyword");
   moviesContainer.innerHTML = `<div class="col-md-12">
-                    <div class="alert alert-warning text-center" role="alert">
-                        Film ${search} tidak ditemukan...
-                    </div>
-                </div>`;
+                                    <div class="alert alert-warning text-center" role="alert">
+                                       ${error}
+                                    </div>
+                                </div>`;
 }
 
 function showMovie(m) {
